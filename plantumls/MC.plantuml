@@ -1,0 +1,567 @@
+@startuml
+
+' Skinparam para um tema mais simples e melhor legibilidade
+skinparam monochrome true
+skinparam classAttributeIconSize 0
+skinparam groupInheritance 1
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 10
+skinparam class {
+    ArrowColor Black
+    BorderColor DimGray
+}
+skinparam interface {
+    ArrowColor Black
+    BorderColor DimGray
+}
+skinparam enum {
+    ArrowColor Black
+    BorderColor DimGray
+}
+
+package controller {
+    class SpotifUMController {
+        - model : SpotifUMModel
+        + SpotifUMController(SpotifUMModel)
+        + adicionarUtilizador(Utilizador) : String
+        + removerUtilizador(Utilizador) : String
+        + adicionarAlbum(Album) : String
+        + removerAlbum(Album) : String
+        + adicionarMusica(Musica, Album) : String
+        + removerMusica(String, String) : String
+        + inserirMusicaNoReprodutor(String, String, String) : String <<Unsupported>>
+        + inserirMusicaAleatoriaNoReprodutor(String) : String <<Unsupported>>
+        + shuffleNoReprodutor(String) : String <<Unsupported>>
+        + removerPlaylist(String, String) : String <<Unsupported>>
+        + adicionarMusicaNaPlaylist(String, String, String, String) : String <<Unsupported>>
+        + removerMusicaDaPlaylist(String, String, String, String) : String <<Unsupported>>
+        + tornarPlaylistPublica(String, String) : String
+        + gerarPlaylistDeFavoritos(String, String) : String <<Unsupported>>
+        + gerarPlaylistPorTempoeGenero(String, String, int, String) : String <<Unsupported>>
+        + getMusicasAlbum(Album) : List<Musica>
+        + getUtilizador(String) : Utilizador
+        + reproduzirMusicaIndividual(String, String) : String
+        + getUtilizadores() : List<Utilizador>
+        + getUtilizadoresNovo() : Map<String, Utilizador>
+        + getAlbums() : List<Album>
+        + getPlaylitsPublicas() : List<Playlist>
+        + getPlaylistsNovo() : Map<String, Playlist>
+        + getAlbum() : Map<String, Album>
+        + mudarPlano(Utilizador, String) : String
+        + marcarComoFavorita(Musica, Utilizador) : String
+        + removerDosFavoritos(Musica, Utilizador) : String
+        + musicaMaisReproduzida() : Musica
+        + interpreteMaisOuvido() : String
+        + utilizadorMaisOuviuNumPeriodo(LocalDateTime, LocalDateTime) : Utilizador
+        + utilizadorComMaisPontos() : Utilizador
+        + generoMaisReproduzido() : String
+        + quantasPlaylistsPublicasExistem() : int
+        + utilizadorComMaisPlaylists() : Utilizador
+        + getConteudoBiblioteca(Utilizador) : List<ColecaoDeMusicasReproduzivel>
+        + avancarMusica(Utilizador) : Reproducao
+        + retrocederMusica(Utilizador) : Reproducao
+        + reproduzirColecaoMusica(Utilizador, ColecaoDeMusicasReproduzivel) : Reproducao
+        + adicionarAlbumABiblioteca(Album, Utilizador) : String
+        + adicionarPlaylistABiblioteca(Playlist, Utilizador) : String
+        + adicionarPlaylist(Utilizador, Playlist, String) : String
+        + adicionarPlaylistAleatoria(Utilizador, Playlist, String) : String
+        + salvarDados()
+        + carregarDados()
+    }
+}
+
+package model {
+    interface ColecaoDeMusicasReproduzivel {
+        + getTipoDeColecao() : String
+        + getNome() : String
+        + getMusicas() : List<Musica>
+        + getMusicasOriginais() : List<Musica>
+        + getTamanho() : int
+        + getMusicaPorIndice(int) : Musica
+        + clone() : ColecaoDeMusicasReproduzivel
+    }
+
+    interface ReproducaoObserver {
+        + update(Reproducao)
+    }
+
+    class Album implements ColecaoDeMusicasReproduzivel, Serializable {
+        - nome : String
+        - artista : String
+        - musicas : List<Musica>
+        + Album()
+        + Album(String, String, List<Musica>)
+        + Album(Album)
+        + getNome() : String
+        + getArtista() : String
+        + setNome(String)
+        + setArtista(String)
+        + getMusicas() : List<Musica>
+        + adicionaMusica(Musica)
+        + removeMusica(Musica)
+        + getMusica(String) : Musica
+        + getMusicaPorIndice(int) : Musica
+        + clone() : Album
+        + musicaMaisReproduzida() : Musica
+        + getTamanho() : int
+        + getMusicasOriginais() : List<Musica>
+        + getTipoDeColecao() : String
+        + incrementaReproducaoSeExistir(Musica)
+    }
+
+    class Biblioteca implements Serializable {
+        - biblioteca : Map<String, List<ColecaoDeMusicasReproduzivel>>
+        - musicasFavoritas : PlaylistListaDeFavoritos
+        + Biblioteca()
+        + Biblioteca(Biblioteca)
+        + getBiblioteca() : Map<String, List<ColecaoDeMusicasReproduzivel>>
+        + setBiblioteca(Map<String, List<ColecaoDeMusicasReproduzivel>>)
+        + getColecao(String) : ColecaoDeMusicasReproduzivel
+        + adicionarPlaylistABiblioteca(Playlist)
+        + adicionarAlbumABiblioteca(Album)
+        + getAlbuns() : List<Album>
+        + getPlaylists() : List<Playlist>
+        + clone() : Biblioteca
+        + numeroDePlaylist() : int
+        + getConteudo() : List<ColecaoDeMusicasReproduzivel>
+        + adicionarMusicaAosFavoritos(Musica)
+        + removerMusicaDosFavoritos(Musica)
+        + isFavorita(Musica) : boolean
+        + getPlaylistDeFavoritos() : PlaylistListaDeFavoritos
+    }
+
+    class Historico implements Serializable, ReproducaoObserver {
+        - historico : List<RegistoDeReproducao>
+        + Historico()
+        + Historico(List<RegistoDeReproducao>)
+        + Historico(Historico)
+        + getHistorico() : List<RegistoDeReproducao>
+        + setHistorico(List<RegistoDeReproducao>)
+        + adicionarRegistoDeReproducaoAoHistorico(RegistoDeReproducao)
+        + update(Reproducao)
+        + clone() : Historico
+        + getUltimoRegisto() : RegistoDeReproducao
+    }
+
+    class RegistoDeReproducao {
+        - musicaReproduzida : String
+        - data : LocalDateTime
+        - reproducao : Reproducao
+        + RegistoDeReproducao()
+        + RegistoDeReproducao(Musica)
+        + RegistoDeReproducao(RegistoDeReproducao)
+        + RegistoDeReproducao(Reproducao)
+        + getMusicaReproduzida() : String
+        + getData() : LocalDateTime
+        + getReproducao() : Reproducao
+        + setData(LocalDateTime)
+        + clone() : RegistoDeReproducao
+    }
+
+    class Reproducao {
+        - sucesso : boolean
+        - nomeDaMusica : String
+        - letraDaMusica : String
+        - musica : Musica
+        + Reproducao()
+        + Reproducao(Musica)
+        + Reproducao(String)
+        + Reproducao(Reproducao)
+        + getNomeDaMusica() : String
+        + setNomeDaMusica(String)
+        + getLetraMusica() : String
+        + setReproducao(String)
+        + getMusica() : Musica
+        + isSucesso() : boolean
+        + clone() : Reproducao
+    }
+
+    class ReproducaoObservable {
+        - observers : List<ReproducaoObserver>
+        + ReproducaoObservable()
+        + adicionaObserver(ReproducaoObserver)
+        + removerObserver(ReproducaoObserver)
+        + notificarObservers(Reproducao)
+    }
+
+    class ReprodutorDeMusica extends ReproducaoObservable implements Serializable {
+        - random : Random
+        - colecao : ColecaoDeMusicasReproduzivel
+        - indiceAtual : int
+        - modoShuffle : boolean
+        + ReprodutorDeMusica()
+        + insereColecao(ColecaoDeMusicasReproduzivel)
+        + reproduzProximaMusica() : Reproducao
+        + reproduzMusicaAnterior() : Reproducao
+        + avançarIndiceAtual()
+        + retrocederIndiceAtual()
+        + setShuffle(boolean)
+    }
+
+    class SpotifUMModel implements ReproducaoObserver {
+        - utilizadores : Map<String, Utilizador>
+        - albuns : Map<String, Album>
+        - playlistsPublicas : Map<String, Playlist>
+        + SpotifUMModel()
+        + setUtilizadores(Map<String, Utilizador>)
+        + setAlbuns(Map<String, Album>)
+        + setPlaylistsPublicas(Map<String, Playlist>)
+        + getUtilizadores() : List<Utilizador>
+        + getUtilizadoresEstado() : Map<String, Utilizador>
+        + getAlbums() : List<Album>
+        + getAlbumsEstado() : Map<String, Album>
+        + getPlaylistsPublicas() : List<Playlist>
+        + getPlaylistEstado() : Map<String, Playlist>
+        + getUtilizadorPorEmail(String) : Utilizador
+        + getAlbum(String) : Album
+        + adicionarUtilizador(Utilizador)
+        + removerUtilizador(Utilizador)
+        + adicionarAlbum(Album)
+        + removerAlbum(Album)
+        + adicionarMusicaAoAlbum(Album, Musica)
+        + getMusicasAlbum(Album) : List<Musica>
+        + removerMusicaDoAlbum(String, String)
+        + musicaMaisReproduzida() : Musica
+        + utilizadorComMaisPontos() : Utilizador
+        + numeroUtilizadores() : int
+        + quantasPlaylistsPublicasExistem() : int
+        + generoMaisReproduzido() : String
+        + reproduzProximaMusicaDoReprodutor(String) : Reproducao
+        + reproduzMusicaAnteriorDoReprodutor(String) : Reproducao
+        + reproduzirColecaoMusica(String, ColecaoDeMusicasReproduzivel) : Reproducao
+        + tornarPlaylistPublica(String, String)
+        + reproduzirMusica(String, String) : String
+        + insereColecaoNoReprodutor(String, String)
+        + adicionarPlaylistAoUtilizador(String, Playlist)
+        + adicionarPlaylistAleatoriaAoUtilizador(String, Playlist)
+        + interpreteMaisOuvido() : String
+        + utilizadorMaisOuviuNumPeriodo(List<Utilizador>, LocalDateTime, LocalDateTime) : Utilizador
+        + utilizadorComMaisPlaylists(List<Utilizador>) : Utilizador
+        + getConteudoBibliotecaDoUtilizador(Utilizador) : List<ColecaoDeMusicasReproduzivel>
+        + adicionarAlbumABiblioteca(Album, String)
+        + adicionarMusicaAosFavoritos(Utilizador, Musica)
+        + removerMusicaDosFavoritos(Utilizador, Musica)
+        + mudarPlanoDoUtilizador(String, String) : String
+        + update(Reproducao)
+    }
+
+    class Utilizador extends ReproducaoObservable implements Serializable, ReproducaoObserver {
+        - nome : String
+        - email : String
+        - morada : String
+        - plano : PlanoSubscricao
+        - pontos : int
+        - reprodutor : ReprodutorDeMusica
+        - historico : Historico
+        - biblioteca : Biblioteca
+        - dataAdesao : LocalDateTime
+        + Utilizador()
+        + Utilizador(String, String, String)
+        + getNome() : String
+        + getEmail() : String
+        + getMorada() : String
+        + getPlanoSubscricao() : PlanoSubscricao
+        + getPontosAtuais() : int
+        + getBiblioteca() : Biblioteca
+        + getHistorico() : Historico
+        + setNome(String)
+        + setEmail(String)
+        + setMorada(String)
+        + setPlanoSubscricao(PlanoSubscricao)
+        + setPontosAtuais(int)
+        + setDataAdesao(LocalDateTime)
+        + clone() : Utilizador
+        + insereColecaoNoReprodutor(String)
+        + reproduzProximaMusica() : Reproducao
+        + reproduzMusicaAnterior() : Reproducao
+        + getPlaylist(String) : Playlist
+        + adicionarPlaylistABiblioteca(Playlist)
+        + adicionarMusicaAosFavoritos(Musica)
+        + removerMusicaDosFavoritos(Musica)
+        + update(Reproducao)
+        + numeroDePlaylistDaBiblioteca() : int
+        + adicionarAlbumABiblioteca(Album)
+        + eFavorita(Musica) : boolean
+    }
+}
+
+package model.musica {
+    interface MusicaExplicitaInterface {
+    }
+
+    class Musica implements Serializable{
+        - nome : String
+        - interprete : String
+        - editora : String
+        - letra : String
+        - notasMusicais : String
+        - genero : String
+        - duracaoEmSegundos : int
+        - numeroDeReproducoes : int
+        + Musica(String, String, String, String, String, String, int)
+        + Musica()
+        + Musica(Musica)
+        + getNome() : String
+        + setNome(String)
+        + getInterprete() : String
+        + setInterprete(String)
+        + getEditora() : String
+        + setEditora(String)
+        + getLetra() : String
+        + setLetra(String)
+        + getNotasMusicais() : String
+        + setNotasMusicais(String)
+        + getGenero() : String
+        + setGenero(String)
+        + getDuracaoEmSegundos() : int
+        + setDuracaoEmSegundos(int)
+        + getNumeroDeReproducoes() : int
+        + setNumeroDeReproducoes(int)
+        + incrementaNumeroDeReproducoes()
+        + clone() : Musica
+        + reproduzir() : String
+        + update(Reproducao)
+    }
+
+    class MusicaExplicita extends Musica implements MusicaExplicitaInterface {
+        + MusicaExplicita(String, String, String, String, String, String, int)
+        + clone() : Musica
+    }
+
+    class MusicaMultimedia extends Musica {
+        - urlVideo : String
+        + MusicaMultimedia(String, String, String, String, String, String, int, String)
+        + MusicaMultimedia(MusicaMultimedia)
+        + getUrlVideo() : String
+        + setUrlVideo(String)
+        + clone() : Musica
+    }
+
+    class MusicaMultimediaExplicita extends MusicaMultimedia implements MusicaExplicitaInterface {
+        + MusicaMultimediaExplicita(String, String, String, String, String, String, int, String)
+        + MusicaMultimediaExplicita(MusicaMultimediaExplicita)
+        + clone() : Musica
+    }
+}
+
+package model.playlists {
+    abstract class Playlist implements ColecaoDeMusicasReproduzivel, Serializable {
+        - nome : String
+        # musicas : List<Musica> 'Mudado para protected para subclasses acederem diretamente se necessário (ou usar super)'
+        + Playlist()
+        + Playlist(String, List<Musica>)
+        + Playlist(Playlist)
+        + getNome() : String
+        + setNome(String)
+        + getMusicasOriginais() : List<Musica>
+        + getMusicas() : List<Musica>
+        + adicionarMusica(Musica)
+        + removerMusica(Musica)
+        + estaVazia() : boolean
+        + duracaoTotal() : int
+        + getTamanho() : int
+        + getMusicaPorIndice(int) : Musica
+        + getTipoDeColecao() : String
+        + contemMusica(Musica) : boolean
+        + {abstract} clone() : Playlist
+    }
+
+    class PlaylistAleatoria extends Playlist {
+        - random : Random
+        + PlaylistAleatoria()
+        + PlaylistAleatoria(String, List<Musica>)
+        + PlaylistAleatoria(PlaylistAleatoria)
+        + getMusicaPorIndice(int) : Musica
+        + clone() : Playlist
+    }
+
+    class PlaylistListaDeFavoritos extends Playlist {
+        + PlaylistListaDeFavoritos()
+        + PlaylistListaDeFavoritos(String, List<Musica>)
+        + PlaylistListaDeFavoritos(PlaylistListaDeFavoritos)
+        + adicionarMusica(Musica)
+        + removerMusica(Musica)
+        + clone() : Playlist
+    }
+
+    class PlaylistPersonalizada extends Playlist {
+        + PlaylistPersonalizada()
+        + PlaylistPersonalizada(String, List<Musica>)
+        + PlaylistPersonalizada(PlaylistPersonalizada)
+        + clone() : Playlist
+    }
+
+    class PlaylistPorGeneroETempo extends Playlist {
+        - genero : String
+        - duracaoMax : int
+        + PlaylistPorGeneroETempo()
+        + PlaylistPorGeneroETempo(String, String, int, List<Musica>)
+        + PlaylistPorGeneroETempo(PlaylistPorGeneroETempo)
+        - {static} filtrarPorGeneroETempo(List<Musica>, String, int) : List<Musica>
+        + getGenero() : String
+        + getDuracaoMax() : int
+        + setGenero(String)
+        + setDuracaoMax(int)
+        + clone() : Playlist
+    }
+
+    class PlaylistPreferenciasComTempoMaximo extends PlaylistListaDeFavoritos {
+        - tempoMaxEmSegundos : int
+        + PlaylistPreferenciasComTempoMaximo(String, int, PlaylistListaDeFavoritos)
+        + PlaylistPreferenciasComTempoMaximo(PlaylistPreferenciasComTempoMaximo)
+        - {static} getMusicasAteMaximo(int, List<Musica>) : List<Musica>
+        + clone() : Playlist
+    }
+
+    class PlaylistPreferenciasExplicitas extends PlaylistListaDeFavoritos {
+        + PlaylistPreferenciasExplicitas(PlaylistListaDeFavoritos)
+        - {static} getMusicasExplicitas(PlaylistListaDeFavoritos) : List<Musica>
+        + PlaylistPreferenciasExplicitas(PlaylistPreferenciasExplicitas)
+        + clone() : Playlist
+    }
+}
+
+package model.planosSubscricao {
+    abstract class PlanoSubscricao {
+        # estrategiaAdicionarPlaylistAleatoria : EstrategiaPlanoSubscricao
+        # estrategiaTornarPlaylistPublica : EstrategiaPlanoSubscricao
+        # estrategiaAdicionarABiblioteca : EstrategiaPlanoSubscricao
+        # estrategiaCriarPlaylist : EstrategiaPlanoSubscricao
+        # estrategiaGerarPlaylistPersonalizadaPeloSistema : EstrategiaPlanoSubscricao
+        # estrategiaGerarPlaylistListaDeFavoritos : EstrategiaPlanoSubscricao
+        + {abstract} pontosPorMusica(int) : int
+        + bonusAdesao() : int
+        + getNomePlano() : String
+        + {abstract} clone() : PlanoSubscricao
+        + executarAdicionarPlaylistAleatoria(Runnable)
+        + executarTornarPlaylistPublica(Runnable)
+        + executarAdicionarABiblioteca(Runnable)
+        + executarCriarPlaylist(Runnable)
+        + executarGerarPlaylistPersonalizadaPeloSistema(Runnable)
+        + executarGerarPlaylistListaDeFavoritos(Runnable)
+    }
+
+    class PlanoSubscricaoFactory {
+        - {static} planos : Map<String, Supplier<PlanoSubscricao>>
+        + {static} criarPlano(String) : PlanoSubscricao
+    }
+
+    class PlanoSubscricaoFree extends PlanoSubscricao implements Serializable {
+        + PlanoSubscricaoFree()
+        + pontosPorMusica(int) : int
+        + clone() : PlanoSubscricao
+    }
+
+    class PlanoSubscricaoPremiumBase extends PlanoSubscricaoFree {
+        + PlanoSubscricaoPremiumBase()
+        + pontosPorMusica(int) : int
+        + clone() : PlanoSubscricao
+    }
+
+    class PlanoSubscricaoPremiumTop extends PlanoSubscricaoPremiumBase {
+        + PlanoSubscricaoPremiumTop()
+        + pontosPorMusica(int) : int
+        + bonusAdesao() : int
+        + clone() : PlanoSubscricao
+    }
+}
+
+package model.estrategias {
+    interface EstrategiaPlanoSubscricao {
+        + executar(Runnable)
+    }
+
+    class EstrategiaPlanoSubscricaoNaoPermite implements EstrategiaPlanoSubscricao {
+        - mensagemPersonalizada : String
+        + EstrategiaPlanoSubscricaoNaoPermite()
+        + EstrategiaPlanoSubscricaoNaoPermite(String)
+        + executar(Runnable)
+    }
+
+    class EstrategiaPlanoSubscricaoPermite implements EstrategiaPlanoSubscricao {
+        + executar(Runnable)
+    }
+}
+
+
+package app {
+    class SpotifumAPP {
+        + {static} main(String[])
+    }
+}
+
+package utils {
+    class EstadodaAPP {
+        + {static} carregarObjeto(String, T) : T
+        + {static} guardarObjeto(String, Object)
+    }
+}
+
+
+
+' === Relações Detalhadas com Navegabilidade ===
+
+' Relação de Composição: Historico compõe RegistoDeReproducao
+    Historico "1" *--> "0..*" RegistoDeReproducao : contem_registos
+    ReprodutorDeMusica --> "0..*" Reproducao : reproduz
+
+
+' Relações Controller-Model
+SpotifUMController "1" o--> "1" SpotifUMModel : controla
+
+
+
+' Relações Model (Composição Forte - Ciclo de Vida Dependente, Navegabilidade do Model para as entidades)
+SpotifUMModel  *--> "0..*" Utilizador : gere_utilizadores
+SpotifUMModel  *--> "0..*" Album : -albuns
+SpotifUMModel  *--> "0..*" Playlist : -playlistspublicas
+
+' Relações Utilizador (Composição Forte, Navegabilidade do Utilizador para seus componentes)
+Utilizador  *--> "1" ReprodutorDeMusica : -reprodutor
+Utilizador  *--> "1" Historico : -historico
+Utilizador  *--> "1" Biblioteca : -biblioteca
+Utilizador  o--> "1" PlanoSubscricao : -planoSubscricao
+
+' Relações Biblioteca (Navegabilidade da Biblioteca para suas coleções)
+' A Biblioteca agrupa ColecaoDeMusicasReproduzivel. As coleções em si (Album, Playlist) são geridas pelo SpotifUMModel.
+' Aqui, a biblioteca 'contém' referências ou identificadores para essas coleções.
+Biblioteca  o--> "0..*" ColecaoDeMusicasReproduzivel : tem
+Biblioteca  *--> "1" PlaylistListaDeFavoritos : -musicasFavoritas
+
+' Relações Coleções de Música (Composição/Agregação, Navegabilidade da Coleção para as Músicas)
+Album  *--> "0..*" Musica : contem musicas
+Playlist  o--> "0..*" Musica : -musicas
+
+' Relações Padrão Observer (Navegabilidade do Observável para os Observadores)
+ReproducaoObservable "1" o--> "0..*" ReproducaoObserver : observers
+
+
+' Relações com Exceções (Dependência - ..>)
+' Ex: SpotifUMModel ..> UtilizadorJaExisteException : throws
+' (Mantidas comentadas para clareza visual do diagrama principal)
+
+' Relações entre Estratégias e Planos (Associação/Agregação, Navegabilidade do Plano para suas Estratégias)
+PlanoSubscricao  o--> "1" EstrategiaPlanoSubscricao : #estrategiaAdicionarPlaylistAleatoria
+PlanoSubscricao  o--> "1" EstrategiaPlanoSubscricao : #estrategiaTornarPlaylistPublica
+PlanoSubscricao  o--> "1" EstrategiaPlanoSubscricao : #estrategiaAdicionarABiblioteca
+PlanoSubscricao  o--> "1" EstrategiaPlanoSubscricao : #estrategiaCriarPlaylist
+PlanoSubscricao  o--> "1" EstrategiaPlanoSubscricao : #estrategiaGerarPlaylistPersonalizadaPeloSistema
+PlanoSubscricao  o--> "1" EstrategiaPlanoSubscricao : #estrategiaGerarPlaylistListaDeFavoritos
+
+
+' Relação Fábrica (Dependência - Criação, Navegabilidade da Fábrica para os produtos que cria)
+PlanoSubscricaoFactory ..> PlanoSubscricaoFree : cria
+PlanoSubscricaoFactory ..> PlanoSubscricaoPremiumBase : cria
+PlanoSubscricaoFactory ..> PlanoSubscricaoPremiumTop : cria
+
+' Relações com Utils (Dependência)
+SpotifUMController ..> utils.EstadodaAPP : salvaguarda
+
+' Relações App (Dependência - Iniciação)
+app.SpotifumAPP ..> controller.SpotifUMController : inicia
+app.SpotifumAPP ..> model.SpotifUMModel : inicia
+app.SpotifumAPP ..> view.SpotifUMView : inicia
+
+
+@enduml

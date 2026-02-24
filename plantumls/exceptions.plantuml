@@ -1,0 +1,16 @@
+@startuml
+package exceptions {
+    class AlbumJaExisteException extends Exception
+    class AlbumNaoExisteException extends Exception
+    class ColecaoDeMusicaVaziaException extends Exception
+    class ColecaoNaoExisteNaBibliotecaException extends Exception
+    class HistoricoVazioException extends Exception
+    class MusicaJaExisteException extends Exception
+    class MusicaNaoExisteException extends Exception
+    class OperacaoSemSucessoException extends Exception
+    class PlanoDeSubscricaoNaoPermiteException extends Exception
+    class UtilizadorJaExisteException extends Exception
+    class UtilizadorNaoExisteException extends Exception
+}
+
+@enduml

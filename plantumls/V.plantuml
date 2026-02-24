@@ -1,0 +1,381 @@
+@startuml
+
+skinparam monochrome true
+skinparam classAttributeIconSize 0
+skinparam groupInheritance 1
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 10
+
+' Ajustes para espaçamento e layout
+skinparam nodesep 80       ' Aumenta a separação horizontal entre nós
+skinparam ranksep 80       ' Aumenta a separação vertical entre níveis
+skinparam Padding 15       ' Adiciona mais espaço ao redor dos elementos
+skinparam ArrowThickness 1.5 ' Torna as setas um pouco mais proeminentes
+
+
+
+package view {
+    class SpotifUMView {
+        - controller : SpotifUMController
+        - currentScreen : BaseScreen
+        + SpotifUMView(SpotifUMController)
+        + setScreen(BaseScreen)
+        + init()
+    }
+    class MenuModoDeAppScreen extends view.bases.MenuBaseScreen {
+        + MenuModoDeAppScreen()
+        + configurarMenu() : List<MenuItem>
+    }
+}
+
+package view.bases {
+    abstract class BaseScreen {
+        - previous : BaseScreen
+        - titulo : String
+        # controller : SpotifUMController
+        - view : SpotifUMView
+        # {static} scanner : Scanner
+        + BaseScreen(String)
+        + getTitulo() : String
+        + getPrevious() : BaseScreen
+        + setPrevious(BaseScreen)
+        + setController(SpotifUMController)
+        + setView(SpotifUMView)
+        + setNextScreen(BaseScreen)
+        + render()
+        + esperarEnter()
+        + {abstract} run()
+    }
+
+    class CampoEntidade { 
+        - pergunta : String
+        - conversor : Function<String, ?>
+        - setter : BiConsumer<Object, ?> 
+        + CampoEntidade(String, Function<String, Object>, BiConsumer<Object, Object>) 
+        + preencherCampo(Object, Scanner) 
+    }
+
+    abstract class CriarEntidadeBaseScreen extends BaseScreen { 
+        - alvo : Object 
+        + CriarEntidadeBaseScreen(String, Object) 
+        # {abstract} novaEntidade() : Object 
+        # {abstract} obterCampos() : List<CampoEntidade> 
+        # {abstract} processarEntidade(Object, Object) 
+        + getAlvo() : Object 
+    }
+
+    abstract class ListarEntidadesBaseScreen extends BaseScreen { 
+        + ListarEntidadesBaseScreen(String)
+        # {abstract} getEntidades() : List<Object> 
+        # {abstract} resumoEntidade(Object) : String 
+        # {abstract} aoSelecionarEntidade(Object) 
+    }
+
+    abstract class MenuBaseScreen extends BaseScreen {
+        - menuItems : Map<Integer, MenuItem>
+        + MenuBaseScreen(String)
+        + {abstract} configurarMenu() : List<MenuItem>
+    }
+
+    abstract class MenuEntidadeBaseScreen extends MenuBaseScreen { 
+        - entidade : Object 
+        + MenuEntidadeBaseScreen(String, Object) 
+        # {abstract} resumoEntidade(Object) : String 
+        - mostrarCabecalhoEntidade(Object) 
+        + getEntidade() : Object 
+    }
+
+    class MenuItem {
+        - opcao : int
+        - descricao : String
+        - acao : Runnable
+        - visibilidade : Supplier<Boolean>
+        + MenuItem(int, String, Runnable)
+        + MenuItem(int, String, Runnable, Supplier<Boolean>)
+        + getOpcao() : int
+        + getDescricao() : String
+        + getAcao() : Runnable
+        + isVisivel() : boolean
+    }
+
+    abstract class SelecionarEntidadeDeListagemScreen extends ListarEntidadesBaseScreen { 
+        - acao : Consumer<Object> 
+        - nextScreen : BaseScreen
+        + SelecionarEntidadeDeListagemScreen(String, Consumer<Object>, BaseScreen) 
+        # aoSelecionarEntidade(Object) 
+    }
+}
+
+package view.gestao {
+    class MarcarMusicaFavoritaScreen extends view.bases.MenuEntidadeBaseScreen { 
+        - utilizador : Utilizador
+        + MarcarMusicaFavoritaScreen(Musica, Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+    class MudarPlanoSubscricaoScreen extends view.bases.MenuEntidadeBaseScreen { 
+        + MudarPlanoSubscricaoScreen(Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+    class RemoverMusicaFavoritaScreen extends view.bases.MenuEntidadeBaseScreen { 
+        - utilizador : Utilizador
+        + RemoverMusicaFavoritaScreen(Musica, Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+}
+
+package view.gestao.apagarEntidades {
+    class ApagarAlbumScreen extends view.bases.MenuEntidadeBaseScreen { 
+        + ApagarAlbumScreen(Album)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+    class ApagarMusicaScreen extends view.bases.MenuEntidadeBaseScreen { 
+        + ApagarMusicaScreen(Musica)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+    class ApagarUtilizadorScreen extends view.bases.MenuEntidadeBaseScreen { 
+        + ApagarUtilizadorScreen(Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+}
+
+package view.gestao.criarEntidades {
+    class CriarAlbumScreen extends view.bases.CriarEntidadeBaseScreen { 
+        + CriarAlbumScreen()
+        # novaEntidade() : Album
+        # obterCampos() : List<CampoEntidade> 
+        # processarEntidade(Object, Object) 
+    }
+    class CriarMusicaScreen extends view.bases.CriarEntidadeBaseScreen { 
+        + CriarMusicaScreen(Album)
+        # novaEntidade() : Musica
+        # obterCampos() : List<CampoEntidade> 
+        # processarEntidade(Object, Object) 
+    }
+    class CriarPlaylistListaFavoritos extends view.bases.CriarEntidadeBaseScreen { 
+        + CriarPlaylistListaFavoritos(Utilizador)
+        # novaEntidade() : Playlist
+        # obterCampos() : List<CampoEntidade> 
+        # processarEntidade(Object, Object) 
+    }
+    class CriarPlaylistPersonalizada extends view.bases.CriarEntidadeBaseScreen { 
+        + CriarPlaylistPersonalizada(Utilizador)
+        # novaEntidade() : Playlist
+        # obterCampos() : List<CampoEntidade> 
+        # processarEntidade(Object, Object) 
+    }
+    class CriarPlaylistPorGeneroETempo extends view.bases.CriarEntidadeBaseScreen { 
+        + CriarPlaylistPorGeneroETempo(Utilizador)
+        # novaEntidade() : Playlist
+        # obterCampos() : List<CampoEntidade> 
+        # processarEntidade(Object, Object) 
+    }
+    class CriarPlaylistsAleatoriaScreen extends view.bases.CriarEntidadeBaseScreen { 
+        + CriarPlaylistsAleatoriaScreen(Utilizador)
+        # novaEntidade() : Playlist
+        # obterCampos() : List<CampoEntidade> 
+        # processarEntidade(Object, Object) 
+    }
+    class CriarUtilizadorScreen extends view.bases.CriarEntidadeBaseScreen { 
+        + CriarUtilizadorScreen()
+        # novaEntidade() : Utilizador
+        # obterCampos() : List<CampoEntidade> 
+        # processarEntidade(Object, Object) 
+    }
+}
+
+package view.gestao.listagens {
+    class ListagemAlbumsScreen extends view.bases.ListarEntidadesBaseScreen { 
+        + ListagemAlbumsScreen(String)
+        # getEntidades() : List<Album>
+        # resumoEntidade(Object) : String 
+        # aoSelecionarEntidade(Object) 
+    }
+    class ListagemEstatisticas extends view.bases.ListarEntidadesBaseScreen { 
+        + ListagemEstatisticas()
+        # getEntidades() : List<String>
+        # resumoEntidade(Object) : String 
+        # aoSelecionarEntidade(Object) 
+        - mostrarMusicaMaisOuvida()
+        - mostrarInterpreteMaisEscutado()
+        - mostrarUtilizadorMaisOuviu()
+        - mostrarUtilizadorMaisPontos()
+        - mostrarGeneroMaisReproduzido()
+        - mostrarQuantasPlaylists()
+        - mostrarUtilizadorComMaisPlaylists()
+    }
+    class ListagemMusicasScreen extends view.bases.ListarEntidadesBaseScreen { 
+        - album : Album
+        + ListagemMusicasScreen(Album)
+        # getEntidades() : List<Musica>
+        # resumoEntidade(Object) : String 
+        # aoSelecionarEntidade(Object) 
+    }
+    class ListagemPlaylistScreen extends view.bases.ListarEntidadesBaseScreen { 
+        + ListagemPlaylistScreen(String)
+        # getEntidades() : List<Playlist>
+        # resumoEntidade(Object) : String 
+        # aoSelecionarEntidade(Object) 
+    }
+    class ListagemUtilizadoresScreen extends view.bases.ListarEntidadesBaseScreen { 
+        + ListagemUtilizadoresScreen(String)
+        # getEntidades() : List<Utilizador>
+        # resumoEntidade(Object) : String 
+        # aoSelecionarEntidade(Object) 
+    }
+}
+
+package view.gestao.menus {
+    class MenuAlbum extends view.bases.MenuEntidadeBaseScreen { 
+        + MenuAlbum(Album)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+        + printInformacao(Album)
+    }
+    class MenuGestaoDeAlbunsScreen extends view.bases.MenuBaseScreen {
+        + MenuGestaoDeAlbunsScreen()
+        + configurarMenu() : List<MenuItem>
+    }
+    class MenuGestaoDePlaylistsScreen extends view.bases.MenuBaseScreen {
+        + MenuGestaoDePlaylistsScreen()
+        + configurarMenu() : List<MenuItem>
+    }
+    class MenuGestaoUtilizadoresScreen extends view.bases.MenuBaseScreen {
+        + MenuGestaoUtilizadoresScreen()
+        + configurarMenu() : List<MenuItem>
+    }
+    class MenuListagensUtilizadoresScreen extends view.bases.MenuBaseScreen {
+        + MenuListagensUtilizadoresScreen()
+        + configurarMenu() : List<MenuItem>
+    }
+    class MenuMusica extends view.bases.MenuEntidadeBaseScreen { 
+        - utilizador : Utilizador
+        + MenuMusica(Musica, Utilizador)
+        + MenuMusica(Musica)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+        + printInformacao(Musica)
+    }
+    class MenuPrincipalScreen extends view.bases.MenuBaseScreen {
+        + MenuPrincipalScreen()
+        + configurarMenu() : List<MenuItem>
+    }
+    class MenuUtilizador extends view.bases.MenuEntidadeBaseScreen { 
+        + MenuUtilizador(Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+        + printInformacao(Utilizador)
+    }
+}
+
+package view.simuladorUtilizador {
+    class ListagemColecoesDeMusicasDaBiblioteca extends view.bases.ListarEntidadesBaseScreen { 
+        - utilizador : Utilizador
+        + ListagemColecoesDeMusicasDaBiblioteca(Utilizador)
+        # getEntidades() : List<ColecaoDeMusicasReproduzivel>
+        # resumoEntidade(Object) : String 
+        # aoSelecionarEntidade(Object) 
+    }
+    class MenuGerirBibliotecaEntidade extends view.bases.MenuEntidadeBaseScreen { 
+        + MenuGerirBibliotecaEntidade(Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+    class MenuGestaoPlaylistsUtilizadores extends view.bases.MenuEntidadeBaseScreen { 
+        + MenuGestaoPlaylistsUtilizadores(Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+    class ReproduzirColecaoEntidadeScreen extends view.bases.MenuEntidadeBaseScreen { 
+        ~ utilizador : Utilizador
+        + ReproduzirColecaoEntidadeScreen(Reproducao, Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+    class ReproduzirMusicasEntidadeScreen extends view.bases.MenuEntidadeBaseScreen { 
+        + ReproduzirMusicasEntidadeScreen(Utilizador)
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+        - reproduzirMusicasIndividuais()
+    }
+    class SimularUtilizadorScreen extends view.bases.BaseScreen {
+        + SimularUtilizadorScreen()
+        + run()
+    }
+    class UtilizadorMenuEntidadeScreen extends view.bases.MenuEntidadeBaseScreen { 
+        + UtilizadorMenuEntidadeScreen(Utilizador)
+        + getEntidade() : Utilizador 
+        # resumoEntidade(Object) : String 
+        + configurarMenu() : List<MenuItem>
+    }
+}
+
+package view.simuladorUtilizador.selecionadores {
+    class SelecionarAlbum extends view.bases.SelecionarEntidadeDeListagemScreen { 
+        + SelecionarAlbum(Consumer<Album>, BaseScreen)
+        # getEntidades() : List<Album>
+        # resumoEntidade(Object) : String 
+    }
+    class SelecionarPlaylist extends view.bases.SelecionarEntidadeDeListagemScreen { 
+        + SelecionarPlaylist(Consumer<Playlist>, BaseScreen)
+        # getEntidades() : List<Playlist>
+        # resumoEntidade(Object) : String 
+    }
+}
+
+package app {
+    class SpotifumAPP {
+        + {static} main(String[])
+    }
+}
+
+package utils {
+    class EstadodaAPP {
+        + {static} carregarObjeto(String, Object) : Object 
+        + {static} guardarObjeto(String, Object)
+    }
+}
+
+class SpotifUMController {}
+class Musica {}
+class Utilizador {}
+class Album {}
+class Playlist {}
+class Reproducao {}
+interface ColecaoDeMusicasReproduzivel {}
+interface Consumer<T> {}
+interface Function<T, R> {}
+interface BiConsumer<T, U> {}
+interface Supplier<T> {}
+class Scanner {}
+class Map<K,V> {}
+class List<E> {}
+class LocalDateTime {}
+
+
+SpotifUMView "1" o--> "0..1" view.bases.BaseScreen : currentScreen
+
+view.bases.MenuBaseScreen --|> view.bases.BaseScreen
+view.bases.MenuEntidadeBaseScreen --|> view.bases.MenuBaseScreen
+view.bases.CriarEntidadeBaseScreen --|> view.bases.BaseScreen
+view.bases.ListarEntidadesBaseScreen --|> view.bases.BaseScreen 
+view.bases.SelecionarEntidadeDeListagemScreen --|> view.bases.ListarEntidadesBaseScreen 
+
+view.bases.BaseScreen "1" o--> "0..1" view.bases.BaseScreen : previous
+
+view.bases.MenuEntidadeBaseScreen "1" o--> "1" Object : entidade_gerida_generica
+
+ListagemMusicasScreen "1" o--> "1" Album : para_album
+MenuMusica "1" o--> "0..1" Utilizador : utilizador_opcional
+SelecionarAlbum "1" o--> "1" view.bases.BaseScreen : nextScreen
+SelecionarPlaylist "1" o--> "1" view.bases.BaseScreen : nextScreen
+
+view.MenuModoDeAppScreen ..> utils.EstadodaAPP : usa_para_persistir
+
+@enduml
